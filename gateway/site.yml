@@ -1,0 +1,4 @@
+---
+
+# IoT Gateway
+- import_playbook: gateway.yml

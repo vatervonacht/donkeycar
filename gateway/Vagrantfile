@@ -1,0 +1,23 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+
+  config.vm.box = "ubuntu/xenial64"
+  config.vm.hostname = "iotgateway"
+
+  config.vm.network "public_network", bridge: "en0: Wi-Fi (AirPort)"
+  config.ssh.private_key_path = ENV['SSH_PRIVATE_KEY']
+  config.ssh.username = "ubuntu"
+  config.ssh.insert_key = "false" # Don't use the insecure Vagrant key
+
+  # Insert the public key on the guest
+  config.vm.provision "file", source: ENV['SSH_PUBLIC_KEY'], destination: "~/.ssh/authorized_keys"
+
+  config.vm.provision "ansible" do | ansible |
+    ansible.playbook = "site.yml"
+    ansible.inventory_path = "./inventory.ini"
+    ansible.limit = "gateway"
+  end
+
+end

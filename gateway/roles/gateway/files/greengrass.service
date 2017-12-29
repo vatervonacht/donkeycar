@@ -1,0 +1,11 @@
+[Unit]
+Description=Greengrass Core Service
+After=systemd-user-sessions.service
+
+[Service]
+Type=forking
+ExecStart=/greengrass/ggc/core/greengrassd start
+ExecStop=/greengrass/ggc/core/greengrassd stop
+
+[Install]
+WantedBy=multi-user.target
