@@ -1,0 +1,39 @@
+#!/bin/bash
+#
+# Uses Expect to pair a Raspberry Pi with a PS3 controller via
+# bluetooth.  Assumes that the sixpair utility has already been used to 
+# expose the PS3 Bluetooth device on the Pi.
+#
+# This is meant to be run ON THE PI ITSELF.
+#
+mac_address=${1}
+
+cat <<-\EOF > /tmp/foo.exp
+set force_conservative 1  
+			 
+if {$force_conservative} {
+ 	set send_slow {1 .1}
+ 	proc send {ignore arg} {
+ 		sleep .1
+ 		exp_send -s -- $arg
+ 	}
+}
+
+set address  [lindex $argv 0]
+spawn $env(SHELL)
+expect -re ".*\$"
+send -- "bluetoothctl\r"
+expect -re ".*\#"
+send -- "agent on\r"
+expect -re ".*\#"
+send -- "trust $address\r"
+expect -re ".*\#"
+send -- "default-agent\r"
+expect -re ".*\#"
+send -- "quit\r"
+expect -re  ".*\$"
+send -- ""
+expect eof
+EOF
+
+expect -f /tmp/foo.exp ${mac_address}
