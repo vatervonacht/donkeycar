@@ -117,11 +117,6 @@ is optional but offers a higher degree of security.
     The key's randomart image is:
     +---[RSA 2048]----+
     |             .*+*|
-    |         . ..+ +o|
-    |      . . ..o O o|
-    |       + +.. B +.|
-    |        S.=.E . .|
-    |       o O=.     |
     |      . ==o.     |
     |      o*+=.      |
     |     o++=        |
