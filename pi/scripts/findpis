@@ -1,0 +1,34 @@
+#!/bin/bash
+
+function usage()
+{
+   echo "Usage: "
+   echo "  findpis -h                    Display this help message"
+   echo "  findpis <network>             Find Raspberry Pi's on <network>"
+   echo ""      
+   echo "  Example: " 
+   echo ""      
+   echo "    findpis 192.168.1.0/24"
+   echo ""      
+   exit 0
+}
+
+
+# This script finds IP addresses of Raspberry Pi's on a local network.
+while getopts ":h" opt; do
+  case ${opt} in
+    h ) 
+      usage
+      ;;
+    \? ) echo "Usage: "
+      ;;
+  esac
+done
+shift $(( OPTIND - 1 ))
+network=$1
+if [[ -z $network ]] ; then
+  echo "ERROR - Need to specify network. Exiting." 
+  usage
+fi
+
+sudo nmap -sP ${network} | awk '/^Nmap/{ip=$NF}/B8:27:EB/{print ip}'

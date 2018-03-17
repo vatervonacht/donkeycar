@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# This script attempts to do some basic setup of a Raspberry Pi
+# configured for Donkey Car use.  It installs the public SSH key
+# and then tries to pair a PS3 controller to the Pi.
+#
+# TODO - Add error checking.  This just assumes everything goes
+#        fine.
+#
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+echo -n "Enter your IP network definition (e.g., 192.168.1.0/24):  "
+read ip_network
+
+echo "Finding Raspberry Pi's on your network ..."
+${DIR}/findpis ${ip_network}
+
+echo
+echo -n "Enter the IP address of the Raspberry Pi: "
+read ip_address
+
+pub_key_file="${HOME}/.ssh/id_rsa.pub"
+echo
+echo -n "Enter the full path to your public SSH key file [${pub_key_file}]:  "
+read tmp
+[[ -z ${tmp} ]] || pub_key_file=${tmp}
+pub_key_matl=$(cat ${pub_key_file})
+
+echo
+echo "Copying public key file to the Pi..."
+ssh pi@${ip_address} -q > /dev/null 2>&1 <<-EOF
+  mkdir -p /home/pi/.ssh
+  chmod 700 /home/pi/.ssh
+  grep -q "${pub_key_matl}" ~/.ssh/authorized_keys
+  [[ \$? -ne 0 ]] && echo "${pub_key_matl}" >> ~/.ssh/authorized_keys
+EOF
+
+echo
+echo -n "Running the Ansible script to configure the OS and applications ..."
+ansible-playbook -i "${ip_address}," ${DIR}/../site.yml 
+
+echo
+echo -n "Enter the Bluetooth hardware address of the PS3 controller:  "
+read mac_address
+
+echo
+echo -n "Connect PS3 to the Pi with a USB cable, press the PS3 logo button.  Press ENTER to continue..."
+read
+
+# Run sixpair
+ssh pi@${ip_address} sudo bin/sixpair > /dev/null 2>&1
+
+echo
+echo "Pairing the PS3 with the Raspberry Pi ..."
+ssh pi@${ip_address} "bash -s" < ${DIR}/pairpi.exp ${mac_address} 2>&1 > /dev/null
+
+echo
+echo "Done."

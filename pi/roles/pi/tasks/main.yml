@@ -1,0 +1,85 @@
+---
+# tasks file for pi
+#
+- name: Ensure nodesource gpg key is installed
+  apt_key: "url={{ item }}"
+  with_items:
+    - "https://deb.nodesource.com/gpgkey/nodesource.gpg.key"
+  tags:
+    - nodejs
+
+- name: Ensure nodesource repo is added to list to install nodejs
+  apt_repository:
+    repo: 'deb {{ item }}  {{ ansible_distribution_release }} main' 
+    update_cache: yes
+  with_items:
+    - "https://deb.nodesource.com/node_8.x"
+  tags:
+    - nodejs
+
+- name: Ensure the right version of nodejs is installed
+  apt:
+    name: nodejs
+  tags:
+    - nodejs
+
+- name: Make sure the donkeycar folder is up to date
+  become: "no"
+  git:
+    repo: "https://github.com/wroscoe/donkey"
+    dest: "/home/pi/donkeycar"
+    update: "yes"
+
+- name: Ensure that the latest donkey Python module is installed
+  become: "no"
+  pip:
+    virtualenv: "/home/pi/.virtualenvs/dk"
+    name: "file:///home/pi/donkeycar"
+
+- name: Ensure that expect is installed
+  apt:
+    name: expect
+    state: present
+
+- name: Ensure bluetooth control is configured
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - bluetooth
+    - libbluetooth3
+    - libusb-dev
+
+- name: Make sure bluetooth services are running
+  systemd: state=started name=bluetooth.service
+
+- name: Ensure the pi user is a member of the bluetooth group
+  user:
+    name: "pi"
+    groups: "bluetooth"
+    append: yes
+
+- name: Ensure that the ~/bin directory exists
+  file:
+    path: "/home/pi/bin"
+    state: directory
+  become: no
+
+- name: Download sixpair PS3 pairing utility
+  get_url: 
+    url: "http://www.pabr.org/sixlinux/sixpair.c"
+    dest: "/home/pi/bin/sixpair.c"
+  become: no
+
+- name: Ensure the Makefile is present to build sixpair executable
+  copy:
+    src: "Sixpair.mk"
+    dest: "/home/pi/bin/Makefile"
+  become: no
+
+- name: Ensure the sixpair executable is built
+  make:
+    chdir: "/home/pi/bin"
+    target: "sixpair"
+  become: no
+
